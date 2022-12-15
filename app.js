@@ -1,13 +1,24 @@
 const express = require('express');
-// const { v4: uuidv4 } = require('uuid');
+const morgan = require('morgan');
+
 const fs = require('fs');
+
 const app = express();
 const port = 3333;
-
-// midllewares
+// 1- midllewares
+app.use(morgan('dev')); // 3rd-Party Middleware
 app.use(express.json());
 
+app.use((req, res, next) => {
+  // meu proprio middleware
+  // adicionando meu middlware no objeto req
+  req.time = new Date().toISOString();
+  next();
+});
+
 const tours = JSON.parse(fs.readFileSync(`${__dirname}/data/tours-simple.json`));
+
+// 2 - ROUTES HANDLERS
 
 const createTour = (req, res) => (req, res) => {
   const id = tours[tours.length - 1].id + 1;
@@ -25,11 +36,12 @@ const getAllTours = (req, res) => {
 };
 
 const getTour = (req, res) => {
+  console.log('horario do req: ', req.time);
   const { id } = req.params;
 
   const index = tours.findIndex(tour => tour.id === +id);
 
-  res.status(200).send({ message: 'OK', data: tours[index] });
+  res.status(200).send({ message: 'OK', requested: req.time, data: tours[index] });
 };
 
 const updateTour = (req, res) => {
@@ -54,7 +66,29 @@ const deleteTour = (req, res) => {
   });
 };
 
+const createUser = (req, res) => {
+  res.status(201).json('created');
+};
+
+const getAllUsers = (req, res) => {
+  res.status(200).json('ok');
+};
+
+const getUser = (req, res) => {
+  res.status(200).json('ok');
+};
+
+const updateUser = (req, res) => {
+  res.status(200).json('ok updated');
+};
+const deleteUser = (req, res) => {
+  res.status(204).json(null);
+};
+// 3- ROUTES
 app.route('/api/v1/tours').post(createTour).get(getAllTours);
 app.route('/api/v1/tours/:id').get(getTour).put(updateTour).delete(deleteTour);
 
-app.listen(port, () => console.log(`http://localhost:${port}`));
+app.route('/api/v1/users').get(getAllUsers).post(createUser);
+app.route('/api/v1/users/:id').get(getUser).put(updateUser).delete(deleteUser);
+// 4 - STARTING SERVER
+app.listen(port, () => console.log(`server online http://localhost:${port}`));
